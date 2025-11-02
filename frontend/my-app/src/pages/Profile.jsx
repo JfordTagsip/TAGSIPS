@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Container,
@@ -29,18 +29,19 @@ const Profile = () => {
     confirmNewPassword: '',
   });
 
-  useEffect(() => {
-    fetchBorrowHistory();
-  }, []);
-
-  const fetchBorrowHistory = async () => {
+  const fetchBorrowHistory = useCallback(async () => {
     try {
       const response = await userService.getBorrowHistory();
       setBorrowHistory(response.data);
     } catch (error) {
+      console.error('Failed to fetch borrow history:', error?.response?.data || error.message);
       toast.error('Failed to fetch borrow history');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBorrowHistory();
+  }, [fetchBorrowHistory]);
 
   const handleChange = (e) => {
     setFormData({

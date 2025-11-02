@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
@@ -22,26 +22,46 @@ import { bookService } from '../services/api';
 
 const BookDetails = () => {
   const [book, setBook] = useState(null);
+  const [reservationQueue, setReservationQueue] = useState([]);
+  const [availability, setAvailability] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  
+  // user's position in reservation queue (computed from fetched queue)
+  const userQueuePosition = reservationQueue?.find?.(r => r.user_id === user?.id)?.position;
 
-  useEffect(() => {
-    fetchBookDetails();
-  }, [id]);
-
-  const fetchBookDetails = async () => {
+  const fetchBookDetails = useCallback(async () => {
     try {
       const response = await bookService.getBook(id);
       setBook(response.data);
-    } catch (error) {
+      // fetch reservation queue and availability
+      try {
+        const [qResp, aResp] = await Promise.all([
+          bookService.getReservationQueue(id),
+          bookService.checkReservationAvailability(id),
+        ]);
+        setReservationQueue(qResp.data.queue || []);
+        setAvailability(aResp.data || null);
+      } catch (e) {
+        // non-blocking - show nothing if protected or error
+        console.debug('Could not fetch reservation info:', e?.response?.data || e.message);
+        setReservationQueue([]);
+        setAvailability(null);
+      }
+    } catch (err) {
+      console.error('Failed to fetch book details:', err?.response?.data || err.message);
       toast.error('Failed to fetch book details');
       navigate('/books');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id, navigate]);
+
+  useEffect(() => {
+    fetchBookDetails();
+  }, [fetchBookDetails]);
 
   const handleBorrow = async () => {
     try {
@@ -194,6 +214,40 @@ const BookDetails = () => {
                 No borrow history available
               </Typography>
             )}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Reservation Info
+              </Typography>
+              {availability ? (
+                <Box>
+                  <Typography>Available copies: {availability.available}</Typography>
+                  <Typography>Pending reservations: {availability.pending}</Typography>
+                  <Typography>Can Reserve: {availability.canReserve ? 'Yes' : 'No'}</Typography>
+                </Box>
+              ) : (
+                <Typography variant="body2" color="text.secondary">Reservation info not available</Typography>
+              )}
+
+              {reservationQueue && reservationQueue.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2">Reservation Queue</Typography>
+                  {userQueuePosition && (
+                    <Typography sx={{ mb: 1 }} color="primary">Your position in queue: {userQueuePosition}</Typography>
+                  )}
+                  <Table size="small">
+                    <TableBody>
+                      {reservationQueue.map((r) => (
+                        <TableRow key={r.id} sx={{ backgroundColor: r.user_id === user?.id ? 'rgba(25,118,210,0.08)' : 'inherit' }}>
+                          <TableCell>{r.position}</TableCell>
+                          <TableCell>{r.user_name}</TableCell>
+                          <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+              )}
+            </Box>
           </Paper>
         </Grid>
       </Grid>

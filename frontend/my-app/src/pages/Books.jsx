@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import BookRecommendations from '../components/BookRecommendations';
@@ -54,11 +54,7 @@ const Books = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchBooks();
-  }, []);
-
-  const fetchBooks = async () => {
+  const fetchBooks = useCallback(async () => {
     dispatch(fetchBooksStart());
     try {
       const response = await bookService.getAllBooks();
@@ -67,7 +63,11 @@ const Books = () => {
       dispatch(fetchBooksFailure(error.message));
       toast.error('Failed to fetch books');
     }
-  };
+  }, [dispatch]);
+
+  useEffect(() => {
+    fetchBooks();
+  }, [fetchBooks]);
 
   const handleOpenDialog = (book = null) => {
     if (book) {

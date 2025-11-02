@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -19,20 +19,20 @@ const BookRecommendations = () => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchRecommendations();
-  }, []);
-
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     try {
       const response = await bookService.getRecommendations();
       setRecommendations(response.data);
     } catch (error) {
-      console.error('Error fetching recommendations:', error);
+      console.error('Error fetching recommendations:', error?.response?.data || error.message);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [fetchRecommendations]);
 
   const LoadingSkeleton = () => (
     <Grid container spacing={2}>

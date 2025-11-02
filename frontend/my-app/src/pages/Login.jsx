@@ -39,8 +39,25 @@ const Login = () => {
       dispatch(loginSuccess(response.data));
       toast.success('Login successful!');
       navigate('/');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
+    } catch (err) {
+      console.error('Login failed:', err?.response?.data || err.message);
+      toast.error(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setIsLoading(true);
+    try {
+      const demoCreds = { email: 'admin@demo.local', password: 'AdminPass123!' };
+      const response = await authService.login(demoCreds);
+      dispatch(loginSuccess(response.data));
+      toast.success('Demo admin signed in');
+      navigate('/');
+    } catch (err) {
+      console.error('Demo login failed:', err?.response?.data || err.message);
+      toast.error('Demo login failed');
     } finally {
       setIsLoading(false);
     }
@@ -93,6 +110,15 @@ const Login = () => {
               disabled={isLoading}
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
+            </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              sx={{ mb: 2 }}
+              onClick={handleDemoLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in...' : 'Demo Admin Login'}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
               <Link component={RouterLink} to="/register" variant="body2">

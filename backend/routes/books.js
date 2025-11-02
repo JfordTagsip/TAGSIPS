@@ -22,24 +22,22 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getAllBooks);
-router.get('/recommendations', protect, getRecommendations);
-router.get('/:id', getBookById);
 
-// Reservation-related public checks
-router.get('/:id/reservation-queue', getReservationQueue);
-router.get('/:id/reservation-availability', checkReservationAvailability);
-
-// Protected routes
+// Protected routes - all require authentication
 router.use(protect);
 
-// Borrowing routes
+// Protected reservation routes (must come before /:id routes)
+router.get('/reservations', getReservations);
+router.post('/reservations', createReservation);
+router.delete('/reservations/:id', cancelReservation);
+
+// Book-specific routes
+router.get('/recommendations', getRecommendations);
+router.get('/:id', getBookById);
+router.get('/:id/reservation-queue', getReservationQueue);
+router.get('/:id/reservation-availability', checkReservationAvailability);
 router.post('/:id/borrow', borrowBook);
 router.post('/:id/return', returnBook);
-
-// Reservations collection routes
-router.post('/reservations', createReservation);
-router.get('/reservations', getReservations);
-router.delete('/reservations/:id', cancelReservation);
 
 // Admin only routes
 router.use(restrictTo('admin'));

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -44,20 +44,21 @@ const Users = () => {
     status: '',
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await userService.getAllUsers();
       setUsers(response.data);
     } catch (error) {
+      console.error('Failed to fetch users:', error?.response?.data || error.message);
       toast.error('Failed to fetch users');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleOpenDialog = (user = null) => {
     if (user) {
@@ -113,8 +114,9 @@ const Users = () => {
         toast.success('User created successfully');
       }
       handleCloseDialog();
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Operation failed');
+    } catch (err) {
+      console.error('Operation failed:', err?.response?.data || err.message);
+      toast.error(err.response?.data?.message || 'Operation failed');
     }
   };
 
@@ -124,8 +126,9 @@ const Users = () => {
         await userService.deleteUser(userId);
         setUsers(users.filter(user => user.id !== userId));
         toast.success('User deleted successfully');
-      } catch (error) {
-        toast.error(error.response?.data?.message || 'Failed to delete user');
+      } catch (err) {
+        console.error('Failed to delete user:', err?.response?.data || err.message);
+        toast.error(err.response?.data?.message || 'Failed to delete user');
       }
     }
   };
@@ -138,7 +141,8 @@ const Users = () => {
         user.id === userId ? { ...user, status: newStatus } : user
       ));
       toast.success(`User ${newStatus === 'active' ? 'activated' : 'blocked'} successfully`);
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to update user status:', err?.response?.data || err.message);
       toast.error('Failed to update user status');
     }
   };

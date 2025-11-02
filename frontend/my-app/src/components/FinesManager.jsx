@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -29,20 +29,21 @@ const FinesManager = () => {
   const [selectedFine, setSelectedFine] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
 
-  useEffect(() => {
-    fetchFines();
-  }, []);
-
-  const fetchFines = async () => {
+  const fetchFines = useCallback(async () => {
     try {
       const response = await userService.getUserFines();
       setFines(response.data);
     } catch (error) {
+      console.error('Failed to fetch fines:', error?.response?.data || error.message);
       toast.error('Failed to fetch fines');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchFines();
+  }, [fetchFines]);
 
   const handleOpenPayment = (fine) => {
     setSelectedFine(fine);

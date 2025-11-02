@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -67,11 +67,7 @@ const Dashboard = () => {
     data: [],
   });
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       const response = await bookService.getDashboardStats();
       setStatistics(response.data.statistics);
@@ -88,9 +84,13 @@ const Dashboard = () => {
         data: response.data.categoryDistribution.data,
       });
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error('Error fetching dashboard data:', error?.response?.data || error.message);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const handleExportData = async (type) => {
     try {

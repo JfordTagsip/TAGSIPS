@@ -28,6 +28,8 @@ const protect = async (req, res, next) => {
             return res.status(401).json({ message: 'User not found' });
         }
 
+                console.log('Auth middleware:', { decoded, user });
+        
         // Add user to request object
         req.user = user;
         next();

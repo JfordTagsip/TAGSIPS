@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -29,6 +29,16 @@ const NotificationSystem = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const { user } = useSelector((state) => state.auth);
 
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await bookService.getNotifications();
+      setNotifications(response.data);
+      setUnreadCount(response.data.filter(n => !n.read).length);
+    } catch (error) {
+      console.error('Error fetching notifications:', error?.response?.data || error.message);
+    }
+  }, []);
+
   useEffect(() => {
     if (user) {
       fetchNotifications();
@@ -36,17 +46,7 @@ const NotificationSystem = () => {
       const interval = setInterval(fetchNotifications, 300000);
       return () => clearInterval(interval);
     }
-  }, [user]);
-
-  const fetchNotifications = async () => {
-    try {
-      const response = await bookService.getNotifications();
-      setNotifications(response.data);
-      setUnreadCount(response.data.filter(n => !n.read).length);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
+  }, [user, fetchNotifications]);
 
   const handleNotificationClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -79,16 +79,16 @@ const NotificationSystem = () => {
       })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error('Error marking all notifications as read:', error?.response?.data || error.message);
     }
   };
 
   const handleEmailNotifications = async () => {
     try {
       await bookService.sendEmailNotifications();
-      // Show success message
+      // Show success message through toast
     } catch (error) {
-      console.error('Error sending email notifications:', error);
+      console.error('Error sending email notifications:', error?.response?.data || error.message);
     }
   };
 
