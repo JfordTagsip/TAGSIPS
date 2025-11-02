@@ -1,0 +1,9 @@
+{
+  "name": "tagsips-root",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "integration": "node scripts/integration.js",
+    "seed": "node backend/db/seed.js"
+  }
+}
